@@ -1,0 +1,33 @@
+USE [FCEBCyberScorecard]
+GO
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[cyber].[lkp_FISMA_CIO_Metrics]') AND type in (N'U'))
+DROP TABLE [cyber].[lkp_FISMA_CIO_Metrics]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [cyber].[lkp_FISMA_CIO_Metrics](
+	[ID] [int] NOT NULL,
+	[Metric_Category_ID] [int] NOT NULL,
+	[Metric_Category] [varchar](50) NULL,
+	[Metric_Name] [varchar](250) NOT NULL,
+	[Metric_Target] [float] NULL,
+	[Metric_Ceiling] [float] NULL,
+	[Metric_Formula] [varchar](max) NULL,
+	[Valid_From_Date] [date] NULL,
+	[Valid_To_Date] [date] NULL,
+	[Last_Modified_Date] [datetime] NULL,
+	[Last_Modified_By] [varchar](50) NULL,
+ CONSTRAINT [PK_lkp_FISMA_CIO_Metrics] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC,
+	[Metric_Category_ID] ASC,
+	[Metric_Name] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
