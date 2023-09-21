@@ -1,0 +1,57 @@
+USE [FCEBCyberScorecard]
+GO
+
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Cyber].[FISMA_CIO_Metric_Reporting]') AND type in (N'U'))
+DROP TABLE [Cyber].[FISMA_CIO_Metric_Reporting]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [Cyber].[FISMA_CIO_Metric_Reporting]
+(
+[ID] INT IDENTITY(1,1) NOT NULL,
+[Reporting_Year] INT NOT NULL,
+[Reporting_Quarter] INT NOT NULL,
+[CyberScope_Agency_ID] INT NULL, 
+[Agency_Name] VARCHAR(250) NOT NULL, 
+[Metric_Category_ID] INT NOT NULL,
+[Metric_Category] VARCHAR(50) NULL,
+[Metric_Name] VARCHAR(250) NOT NULL, 
+[Metric_Value] DECIMAL(18,6) NULL,
+[Last_Modified_Date] DATETIME NULL,
+[Last_Modified_By] VARCHAR(50) NULL
+ CONSTRAINT [PK_FISMA_CIO_Metric_Reporting] PRIMARY KEY CLUSTERED 
+(
+    [ID] ASC
+   ,[Reporting_Year] DESC
+   ,[Reporting_Quarter] DESC
+   ,[Agency_Name] ASC
+   ,[Metric_Category_ID] ASC
+   ,[Metric_Name] ASC 
+
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON)
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IDX1_FISMA_CIO_Metric_Reporting] 
+ON [Cyber].[FISMA_CIO_Metric_Reporting]
+([Reporting_Year]) 
+WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON)
+
+CREATE NONCLUSTERED INDEX [IDX2_FISMA_CIO_Metric_Reporting] 
+ON [Cyber].[FISMA_CIO_Metric_Reporting]
+([Reporting_Quarter]) 
+WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON)
+
+CREATE NONCLUSTERED INDEX [IDX3_FISMA_CIO_Metric_Reporting] 
+ON [Cyber].[FISMA_CIO_Metric_Reporting]
+([Agency_Name]) 
+WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON)
+
+CREATE NONCLUSTERED INDEX [IDX4_FISMA_CIO_Metric_Reporting] 
+ON [Cyber].[FISMA_CIO_Metric_Reporting]
+([Metric_Name]) 
+WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON)
