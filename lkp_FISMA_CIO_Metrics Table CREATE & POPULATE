@@ -1,0 +1,279 @@
+DECLARE
+@LastModifiedBy VARCHAR(100) = 'Gregory L. Grattan'
+------------------------------------------------------------------------
+--DECLARE & SET PARAMS 
+DECLARE @spLastModifiedBy VARCHAR(100)
+
+SET @spLastModifiedBy = @LastModifiedBy 
+------------------------------------------------------------------------
+DELETE [FCEBCyberScorecard].[cyber].[lkp_FISMA_CIO_Metrics]
+--WHERE ID <= 15
+
+INSERT INTO [FCEBCyberScorecard].[cyber].[lkp_FISMA_CIO_Metrics]
+SELECT 
+ ID = 1 
+,Metric_Category_ID = 1 
+,Metric_Category = 'IDENTIFY'
+,Metric_Name = 'ATO_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 5
+,Metric_Formula = ',[Value] = ISNULL((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.3.%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)) 
+/ NULLIF((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1.%'' OR s.Identifier_Text LIKE ''1.1.2.%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)), 0) 
+* c.Metric_Ceiling, 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 2
+,Metric_Category_ID = 1 
+,Metric_Category = 'IDENTIFY'
+,Metric_Name = 'Device_Scans_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = NULL
+,Metric_Formula = ',[Value] = ISNULL(SUM((CASE WHEN s.Identifier_Text = ''1.3.1'' THEN CONVERT(FLOAT, REPLACE(s.Answer, ''-1'',''0'')) ELSE 0 END / 100) * 5)
++		SUM((CASE WHEN s.Identifier_Text = ''1.3.2'' THEN CONVERT(FLOAT, REPLACE(s.Answer, ''-1'',''0'')) ELSE 0 END / 100) * 2.5)
++		SUM((CASE WHEN s.Identifier_Text = ''1.3.3'' THEN CONVERT(FLOAT, REPLACE(s.Answer, ''-1'',''0''))ELSE 0  END / 100) * 1.25), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 3
+,Metric_Category_ID = 1 
+,Metric_Category = 'IDENTIFY'
+,Metric_Name = 'EO_Critical_Software_Inventory_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 5
+,Metric_Formula = ',[Value] = ISNULL(SUM(CASE WHEN s.Identifier_Text = ''4.2.1'' AND s.Answer = ''Y'' THEN c.Metric_Ceiling END), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 4
+,Metric_Category_ID = 2
+,Metric_Category = 'PROTECT'
+,Metric_Name = 'Encryption_Data_At_Rest_Score'
+,Metric_Target = 9
+,Metric_Ceiling = 10
+,Metric_Formula = ',[Value] = ISNULL(CASE WHEN
+		(SUM(CASE WHEN s.Identifier_Text LIKE ''2.1.1%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF(SUM(CASE WHEN (s.Identifier_Text LIKE (''2.1.a%'') OR s.Identifier_Text LIKE (''2.1.b%'') OR s.Identifier_Text LIKE (''2.1.c%'')) THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) * 10) 
+ >= c.Metric_Target 
+ THEN c.Metric_Ceiling 
+ ELSE 
+		(((SUM(CASE WHEN s.Identifier_Text LIKE ''2.1.1%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF(SUM(CASE WHEN (s.Identifier_Text LIKE (''2.1.a%'') OR s.Identifier_Text LIKE (''2.1.b%'') OR s.Identifier_Text LIKE (''2.1.c%'')) THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) * 10) / c.Metric_Target) * c.Metric_Ceiling) 
+ END, 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 5
+,Metric_Category_ID = 2
+,Metric_Category = 'PROTECT'
+,Metric_Name = 'Encryption_Data_In_Transit_Score'
+,Metric_Target = 9
+,Metric_Ceiling = 10
+,Metric_Formula = ',[Value] = ISNULL(CASE WHEN
+		 (SUM(CASE WHEN s.Identifier_Text LIKE ''2.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)) 
++		 (SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)), 0) * 10)
+ >= c.Metric_Target 
+ THEN c.Metric_Ceiling 
+ ELSE 
+		 (((SUM(CASE WHEN s.Identifier_Text LIKE ''2.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)) 
++		 (SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)), 0) * 10) / c.Metric_Target) * c.Metric_Ceiling) 
+ END, 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 6
+,Metric_Category_ID = 2
+,Metric_Category = 'PROTECT'
+,Metric_Name = 'MFA_Score'
+,Metric_Target = 9
+,Metric_Ceiling = 10
+,Metric_Formula = ',[Value] = ISNULL(CASE WHEN
+	   (((SUM(CASE WHEN s.Identifier_Text LIKE (''2.3.a%'') OR s.Identifier_Text LIKE (''2.3.b%'') OR s.Identifier_Text LIKE (''2.3.c%'') THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1%'' OR s.Identifier_Text LIKE ''1.1.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)), 0)) 
++
+		 (SUM(CASE WHEN s.Identifier_Text LIKE ''2.4%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1%'' OR s.Identifier_Text LIKE ''1.1.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)), 0))) * 10) 
+ >= c.Metric_Target 
+ THEN c.Metric_Ceiling 
+ ELSE 
+	   (((((SUM(CASE WHEN s.Identifier_Text LIKE (''2.3.a%'') OR s.Identifier_Text LIKE (''2.3.b%'') OR s.Identifier_Text LIKE (''2.3.c%'') THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1%'' OR s.Identifier_Text LIKE ''1.1.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)), 0)) 
++
+		 (SUM(CASE WHEN s.Identifier_Text LIKE ''2.4%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF((SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1%'' OR s.Identifier_Text LIKE ''1.1.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)), 0))) * 10) / c.Metric_Target) * c.Metric_Ceiling) 
+ END, 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 7
+,Metric_Category_ID = 2
+,Metric_Category = 'PROTECT'
+,Metric_Name = 'Smart_Patching_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = NULL
+,Metric_Formula = ',[Value] = ISNULL(SUM(CASE WHEN s.Identifier_Text = ''8.1.2'' AND s.Answer = ''Y'' THEN 4 ELSE 0 END) 
++      (SUM((CASE WHEN s.Identifier_Text = ''8.2.1'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) / 100) * 6), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 8
+,Metric_Category_ID = 3
+,Metric_Category = 'DETECT'
+,Metric_Name = 'HVA_Three_Year_Assessment_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 5
+,Metric_Formula = ',[Value] = ISNULL(SUM(CASE WHEN s.Identifier_Text = ''7.2'' AND s.Answer = ''Y'' THEN c.Metric_Ceiling ELSE 0 END), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 9
+,Metric_Category_ID = 3
+,Metric_Category = 'DETECT'
+,Metric_Name = 'Testing_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = NULL
+,Metric_Formula = ',[Value] = ISNULL((
+CASE WHEN (SUM(CASE WHEN s.Identifier_Text = ''7.1.1.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.1.a'' OR s.Identifier_Text = ''1.1.2.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) IS NULL THEN 
+((
+CASE WHEN (SUM(CASE WHEN s.Identifier_Text = ''7.1.1.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) > .5 THEN 1.25 * 2 ELSE (((SUM(CASE WHEN s.Identifier_Text = ''7.1.1.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) * 1.25) / .5) * 2 END 
++
+CASE WHEN (SUM(CASE WHEN s.Identifier_Text = ''7.1.2.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) > .5 THEN 1.25 * 2 ELSE (((SUM(CASE WHEN s.Identifier_Text = ''7.1.2.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) * 1.25) / .5) * 2 END 
+))
+ELSE 
+((
+CASE WHEN (SUM(CASE WHEN s.Identifier_Text = ''7.1.1.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.1.a'' OR s.Identifier_Text = ''1.1.2.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) > .5 THEN 1.25 ELSE ((SUM(CASE WHEN s.Identifier_Text = ''7.1.1.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.1.a'' OR s.Identifier_Text = ''1.1.2.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) * 1.25) / .5 END 
++
+CASE WHEN (SUM(CASE WHEN s.Identifier_Text = ''7.1.1.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) > .5 THEN 1.25 ELSE ((SUM(CASE WHEN s.Identifier_Text = ''7.1.1.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) * 1.25) / .5  END 
++
+CASE WHEN (SUM(CASE WHEN s.Identifier_Text = ''7.1.2.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.1.a'' OR s.Identifier_Text = ''1.1.2.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) > .5 THEN 1.25 ELSE ((SUM(CASE WHEN s.Identifier_Text = ''7.1.2.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.1.a'' OR s.Identifier_Text = ''1.1.2.a'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) * 1.25) / .5 END 
++
+CASE WHEN (SUM(CASE WHEN s.Identifier_Text = ''7.1.2.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) > .5 THEN 1.25 ELSE ((SUM(CASE WHEN s.Identifier_Text = ''7.1.2.d'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) ) * 1.25) / .5 END 
+))
+END), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 10
+,Metric_Category_ID = 3
+,Metric_Category = 'DETECT'
+,Metric_Name = 'VDP_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 5
+,Metric_Formula = ',[Value] = ISNULL(SUM(CASE WHEN s.Identifier_Text = ''9.1'' AND s.Answer LIKE ''%in scope%'' THEN c.Metric_Ceiling 
+WHEN s.Identifier_Text = ''9.1'' AND s.Answer LIKE ''%incomplete scope%'' THEN 2.5 ELSE 0 END), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 11
+,Metric_Category_ID = 4
+,Metric_Category = 'RESPOND'
+,Metric_Name = 'Enterprise_EDR_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 7.5
+,Metric_Formula = ',[Value] = ISNULL(SUM(CASE WHEN s.Identifier_Text = ''10.8.2'' AND s.Answer = ''Y'' THEN c.Metric_Ceiling ELSE 0 END), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 12
+,Metric_Category_ID = 4
+,Metric_Category = 'RESPOND'
+,Metric_Name = 'IR_Plan_Test_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 7.5
+,Metric_Formula = ',[Value] = ISNULL((SUM(CASE WHEN s.Identifier_Text = ''10.1.1'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text LIKE ''1.1.1%'' OR s.Identifier_Text LIKE ''1.1.2%'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0) * c.Metric_Ceiling), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 13
+,Metric_Category_ID = 5
+,Metric_Category = 'RECOVER'
+,Metric_Name = 'Enterprise_BCP_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 5
+,Metric_Formula = ',[Value] = ISNULL(SUM(CASE WHEN s.Identifier_Text = ''10.2'' AND s.Answer = ''Y'' THEN c.Metric_Ceiling ELSE 0 END), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL--'2022-12-31'
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 14
+,Metric_Category_ID = 5
+,Metric_Category = 'RECOVER'
+,Metric_Name = 'HVA_Contingency_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 5
+,Metric_Formula = ',[Value] = ISNULL(((SUM(CASE WHEN s.Identifier_Text = ''10.3'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END) 
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0)) * c.Metric_Ceiling), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+UNION ALL
+SELECT
+ ID = 15
+,Metric_Category_ID = 5
+,Metric_Category = 'RECOVER'
+,Metric_Name = 'HVA_Resilience_Score'
+,Metric_Target = NULL
+,Metric_Ceiling = 5
+,Metric_Formula = ',[Value] = ISNULL(((SUM(CASE WHEN s.Identifier_Text = ''10.3.1'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''1.1.5'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0)) * (c.Metric_Ceiling/2)) 
++ ((SUM(CASE WHEN s.Identifier_Text = ''10.3.2'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END)  
+/ NULLIF(SUM(CASE WHEN s.Identifier_Text = ''10.3.1'' THEN CONVERT(FLOAT,s.Answer) ELSE 0 END), 0)) * (c.Metric_Ceiling/2)), 0)'
+,Valid_From_Date = '2022-10-01'
+,Valid_To_Date = NULL
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
