@@ -1,0 +1,63 @@
+USE [FCEBCyberScorecard]
+GO
+DROP PROCEDURE IF EXISTS [dbo].[insFISMA_HVA_Metric_Reporting]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[insFISMA_HVA_Metric_Reporting]
+(
+ @LastModifiedBy VARCHAR(100)
+)
+AS
+/*----------------------------------------------------------------------------------------------------
+--Sample Call
+
+--EXEC [FCEBCyberScorecard].[dbo].[insFISMA_HVA_Metric_Reporting] 'Gregory L. Grattan'
+
+------------------------------------------------------------------
+Creation Date = 07/06/2023 By Gregory L. Grattan
+
+Changes:
+----------------------------------------------------------------------------------------------------*/
+BEGIN 
+--------------------------------------------------
+--NEED DEBUG MESSAGES 
+------------------------------------------------------------------------
+--DECLARE & SET PARAMS 
+DECLARE @spLastModifiedBy VARCHAR(100)
+
+SET @spLastModifiedBy = @LastModifiedBy 
+------------------------------------------------------------------------
+--STATEMENT
+--DELETE F
+--FROM [FCEBCyberScorecard].[Cyber].[FISMA_HVA_Metric_Reporting] F WITH(NOLOCK)
+------------------------------------------------------------------------
+--FINAL SELECT FOR INSERT INTO TABLE
+INSERT INTO [FCEBCyberScorecard].[Cyber].[FISMA_HVA_Metric_Reporting]
+SELECT 
+Reporting_Year = '20' + RIGHT(h.DateCreated, 2) 
+,Agency_ID = sa.CyberScopePK_Agency
+,Agency_Name = h.Agency 
+,Bureau_Name = h.Bureau
+,HVA_ID = h.HVA_ID
+,HVA_Title = h.[HVA Title]
+,HVA_Record_Date_Created = h.DateCreated
+,Question_Number = h.[Question #]
+,Question_Text = h.[Question]
+,Question_Answer = h.Answer
+,LastModifiedDate = GETDATE()
+,LastModifedBy = @spLastModifiedBy
+FROM [FCEBCyberScorecard].[cyber].[FISMA_HVA_Staging] h WITH(NOLOCK)
+
+LEFT JOIN [FCEBCyberScorecard].[db_owner].[tblCyberScopeAgencies] sa WITH(NOLOCK)
+ ON h.agency = sa.agency
+------------------------------------------------------------------------
+--DROP STAGING TABLE 
+DROP TABLE [FCEBCyberScorecard].[cyber].[FISMA_HVA_Staging]
+------------------------------------------------------------------------
+END 
+GO
+
+
