@@ -1,0 +1,34 @@
+USE [FCEBCyberScorecard]
+GO
+
+/****** Object:  Table [db_owner].[tblCyberScopeQuestions]    Script Date: 9/26/2023 9:42:34 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[db_owner].[tblCyberScopeQuestions]') AND type in (N'U'))
+DROP TABLE [db_owner].[tblCyberScopeQuestions]
+GO
+
+/****** Object:  Table [db_owner].[tblCyberScopeQuestions]    Script Date: 9/26/2023 9:42:34 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [db_owner].[tblCyberScopeQuestions](
+	[QuestionID] [bigint] NOT NULL,
+	[PK_Question_CyberScope] [int] NULL,
+	[Question] [nvarchar](50) NOT NULL,
+	[Question_Description] [nvarchar](300) NOT NULL,
+	[Metric_References] [nvarchar](50) NULL,
+	[BOD_References] [nvarchar](50) NULL,
+	[NIST_References] [nvarchar](50) NULL,
+	[M_Memo_References] [nvarchar](50) NULL,
+	[Column_Notes] [nvarchar](1000) NULL,
+	[Start_Period] [nvarchar](50) NOT NULL,
+	[End_Period] [nvarchar](1) NULL,
+	[Status] [nvarchar](50) NOT NULL,
+ CONSTRAINT [PK_tblCyberScopeQuestions] PRIMARY KEY CLUSTERED 
+(
+	[QuestionID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
