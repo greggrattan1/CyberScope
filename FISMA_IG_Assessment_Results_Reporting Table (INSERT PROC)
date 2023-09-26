@@ -1,0 +1,66 @@
+USE [FCEBCyberScorecard]
+GO
+DROP PROCEDURE IF EXISTS [dbo].[insFISMA_IG_Assessment_Results_Reporting]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[insFISMA_IG_Assessment_Results_Reporting]
+(
+ @LastModifiedBy VARCHAR(100)
+)
+AS
+/*----------------------------------------------------------------------------------------------------
+--Sample Call
+
+--EXEC [FCEBCyberScorecard].[dbo].[insFISMA_IG_Assessment_Results_Reporting] 'Gregory L. Grattan'
+------------------------------------------------------------------
+Creation Date = 07/06/2023 By Gregory L. Grattan
+
+Changes:
+----------------------------------------------------------------------------------------------------*/
+BEGIN 
+--------------------------------------------------
+--NEED DEBUG MESSAGES 
+------------------------------------------------------------------------
+--DECLARE & SET PARAMS  
+DECLARE @spLastModifiedBy VARCHAR(100)
+
+SET @spLastModifiedBy = @LastModifiedBy 
+------------------------------------------------------------------------
+--DELETE STATEMENT
+--DELETE F
+--FROM [FCEBCyberScorecard].[Cyber].[FISMA_IG_Assessment_Results_Reporting] F WITH(NOLOCK)
+------------------------------------------------------------------------
+--FINAL SELECT FOR INSERT INTO TABLE
+INSERT INTO [FCEBCyberScorecard].[Cyber].[FISMA_IG_Assessment_Results_Reporting]
+SELECT 
+ Reporting_Year = F.Year 
+,CyberScope_Agency_ID = sa.[CyberScopePK_Agency]
+,Agency_Name = F.Agency
+,Agency_Size = F.[Agency Size]
+,Question_Number = ROUND(F.[Question Number], 2)
+,Question_Text = F.Question
+,Answer = F.Answer
+,External_Data_Type = F.[External Data Type]
+,[Value] = F.Value
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+FROM [FCEBCyberScorecard].[cyber].[FISMA_IG_Assessment_Results_Staging] F WITH(NOLOCK)
+
+LEFT JOIN [FCEBCyberScorecard].[db_owner].[tblCyberScopeAgencies] sa WITH(NOLOCK)
+ ON F.agency = sa.agency
+
+ORDER BY 
+ F.Year DESC 
+,F.Agency ASC
+,ROUND(F.[Question Number], 2) ASC
+------------------------------------------------------------------------
+--DROP STAGING TABLE AFTER IT IS LOADED
+DROP TABLE [FCEBCyberScorecard].[cyber].[FISMA_IG_Assessment_Results_Staging]
+------------------------------------------------------------------------
+END 
+GO
+
+
