@@ -1,0 +1,95 @@
+USE [FCEBCyberScorecard]
+GO
+DROP PROCEDURE IF EXISTS [dbo].[insFISMA_Incidents_Reporting]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[insFISMA_Incidents_Reporting]
+(
+ @ReportingYear VARCHAR(4)
+,@ReportingMonth VARCHAR(2)
+,@LastModifiedBy VARCHAR(100)
+)
+AS
+/*----------------------------------------------------------------------------------------------------
+--Sample Call
+
+--EXEC [FCEBCyberScorecard].[dbo].[insFISMA_Incidents_Reporting]
+
+------------------------------------------------------------------
+Creation Date = 07/10/2023 By Gregory L. Grattan
+
+Changes:
+----------------------------------------------------------------------------------------------------*/
+BEGIN 
+--------------------------------------------------
+--NEED DEBUG MESSAGES 
+------------------------------------------------------------------------
+--DECLARE & SET PARAMS 
+DECLARE @spReportingYear VARCHAR(4)  
+DECLARE @spReportingMonth VARCHAR(2)  
+DECLARE @spLastModifiedBy VARCHAR(100)
+
+SET @spReportingYear = @ReportingYear 
+SET @spReportingMonth = @ReportingMonth 
+SET @spLastModifiedBy = @LastModifiedBy 
+------------------------------------------------------------------------
+--STATEMENT
+--DELETE F
+--FROM [FCEBCyberScorecard].[Cyber].[FISMA_Incidents_Reporting] F WITH(NOLOCK)
+------------------------------------------------------------------------
+--FINAL SELECT FOR INSERT INTO TABLE
+INSERT INTO [FCEBCyberScorecard].[Cyber].[FISMA_Incidents_Reporting]
+SELECT 
+ [ReportingYear] = @spReportingYear
+,[ReportingMonth] = @spReportingMonth
+,[Organization] = I.[Organization]
+,[Impacted_Agency_Name] = I.[Impacted Agency__c]
+,[Incident_ID] = I.[Incident ID]
+,[Impacted_Sub_Agency_Name] = I.[ImpactedSubAgency__c]
+,[Impacted_Entity_Affiliation] = I.[ImpactedEntityAffiliation__c]
+,[Tracking_Number] = I.[TrackingNo]
+,[Categorization_Tier_1] = I.[Categorization Tier 1]
+,[Impacted_Email_Address] = I.[ImpactedEmail__c]
+,[Last_Name] = I.[Last Name]
+,[Reported_Source] = I.[Reported Source]
+,[NCISS_Reported_Priority_And_Color] = I.[NCISS_Reported_Priority_Color__c]
+,[Observed_Activity] = I.[ObservedActivity2__c]
+,[Observed_Activity_Location] = I.[ObservedActivityLocation2__c]
+,[Information_Impact] = I.[InformationImpact2__c]
+,[Functional_Impact] = I.[Functional Impact2__c]
+,[Infrastructure_Sector] = I.[InfrastructureSector2__c]
+,[Is_TV_Unknown] = I.[TV_Unknown__c]
+,[Is_TV_Attrition] = I.[TV_Attrition__c]
+,[Is_TV_Web] = I.[TV_Web__c]
+,[Is_TV_Email] = I.[TV_Email__c]
+,[Is_TV_External_Removable_Media] = I.[TV_ExternalRemovableMedia__c]
+,[Is_TV_Impersonation_Spoofing] = I.[TVImpersonationSpoofing__c]
+,[Is_TV_Improper_Usage] = I.[TV_ImproperUsage__c]
+,[Is_TV_Lost_Smartphone] = I.[TVLostSmartphone__c]
+,[Is_TV_Lost_Or_Stolen_Token] = I.[TVLostOrStolenToken__c]
+,[Is_TV_Lost_Laptop] = I.[TVLostLaptop__c]
+,[Is_TV_Other] = I.[TV_Other__c]
+,[Is_Major Incident_Per_OMB_Guidance] = I.[Major Incident per OMB Guidance__c]
+,[Summary] = I.[Summary]
+,[PII_Description] = I.[PIIDescription__c]
+,[Status] = I.[Status]
+,[Occurred_On_Datetime] = I.[OccurredOn__c]
+,[Reported_Datetime] = I.[Reported Date]
+,[Submitted_Datetime] = I.[Submit Date]
+,[LastModifiedDate] = GETDATE()
+,[LastModifiedBy] = @spLastModifiedBy
+FROM [FCEBCyberScorecard].[cyber].[FISMA_Incidents_Staging] I WITH(NOLOCK)
+ORDER BY 
+ I.[Impacted Agency__c] ASC
+,I.[Incident ID] ASC
+------------------------------------------------------------------------
+--DROP STAGING TABLE 
+DROP TABLE [FCEBCyberScorecard].[cyber].[FISMA_Incidents_Staging]
+------------------------------------------------------------------------
+END 
+GO
+
+
