@@ -1,0 +1,226 @@
+install-module sqlserver -Scope CurrentUser
+
+Filter Timestamp {"$(Get-Date -Format "MM/dd/yyyy HH:mm:ss K")> $_"}
+
+$date = get-date -format yyyy-MM-dd_HH00
+$dateonly = get-date -format yyyy-MM-dd
+$StartTime = Get-Date -format HH:mm:s
+
+$ServerName = "SPC-SQL-05"
+$DBName = "FCEBCyberScorecard"
+$RootTableName = "FISMA_HVA_Staging"
+$Schema = "cyber"
+###SQL Functions
+#Get DataTypes
+function Get-Type 
+{ 
+    param($type) 
+ 
+$types = @( 
+'System.Boolean', 
+'System.Byte[]', 
+'System.Byte', 
+'System.Char', 
+'System.Datetime', 
+'System.Decimal', 
+'System.Double', 
+'System.Guid', 
+'System.Int16', 
+'System.Int32', 
+'System.Int64', 
+'System.Single', 
+'System.UInt16', 
+'System.UInt32', 
+'System.UInt64') 
+ 
+    if ( $types -contains $type ) { 
+        Write-Output "$type" 
+    } 
+    else { 
+        Write-Output 'System.String' 
+         
+    } 
+}
+function Get-SqlType  
+{  
+    param([string]$TypeName)  
+  
+    switch ($TypeName)   
+    {  
+        'Boolean' {[Data.SqlDbType]::Bit}  
+        'Byte[]' {[Data.SqlDbType]::VarBinary}  
+        'Byte'  {[Data.SQLDbType]::VarBinary}  
+        'Datetime'  {[Data.SQLDbType]::DateTime}  
+        'Decimal' {[Data.SqlDbType]::Decimal}  
+        'Double' {[Data.SqlDbType]::Float}  
+        'Guid' {[Data.SqlDbType]::UniqueIdentifier}  
+        'Int16'  {[Data.SQLDbType]::SmallInt}  
+        'Int32'  {[Data.SQLDbType]::Int}  
+        'Int64' {[Data.SqlDbType]::BigInt}  
+        'UInt16'  {[Data.SQLDbType]::SmallInt}  
+        'UInt32'  {[Data.SQLDbType]::Int}  
+        'UInt64' {[Data.SqlDbType]::BigInt}  
+        'Single' {[Data.SqlDbType]::Decimal} 
+        default {[Data.SqlDbType]::VarChar}  
+    }  
+      
+}
+#Convert to DataTable
+function Out-DataTable 
+{ 
+    [CmdletBinding()] 
+    param([Parameter(Position=0, Mandatory=$true, ValueFromPipeline = $true)] [PSObject[]]$InputObject) 
+ 
+    Begin 
+    { 
+        $dt = new-object Data.datatable   
+        $First = $true  
+    } 
+    Process 
+    { 
+        foreach ($object in $InputObject) 
+        { 
+            $DR = $DT.NewRow()   
+            foreach($property in $object.PsObject.get_properties()) 
+            {   
+                if ($first) 
+                {   
+                    $Col =  new-object Data.DataColumn   
+                    $Col.ColumnName = $property.Name.ToString()   
+                    if ($property.value) 
+                    { 
+                        if ($property.value -isnot [System.DBNull]) { 
+                            $Col.DataType = [System.Type]::GetType("$(Get-Type $property.TypeNameOfValue)") 
+                         } 
+                    } 
+                    $DT.Columns.Add($Col) 
+                }   
+                if ($property.Gettype().IsArray) { 
+                    $DR.Item($property.Name) =$property.value | ConvertTo-XML -AS String -NoTypeInformation -Depth 1 
+                }   
+               else { 
+                    $DR.Item($property.Name) = $property.value 
+                } 
+            }   
+            $DT.Rows.Add($DR)   
+            $First = $false 
+        } 
+    }  
+      
+    End 
+    { 
+        Write-Output @(,($dt)) 
+    } 
+ 
+}
+#Create SQL Table
+function Add-SqlTable  
+{  
+  
+    [CmdletBinding()]  
+    param(  
+    [Parameter(Position=0, Mandatory=$true)] [string]$ServerInstance,  
+    [Parameter(Position=1, Mandatory=$true)] [string]$Database,  
+    [Parameter(Position=2, Mandatory=$true)] [String]$TableName,  
+    [Parameter(Position=3, Mandatory=$true)] [System.Data.DataTable]$DataTable,    
+    [ValidateRange(0,8000)]  
+    [Parameter(Position=4, Mandatory=$false)] [Int32]$MaxLength=5000, 
+    [Parameter(Position=5, Mandatory=$false)] [switch]$AsScript 
+    )  
+  
+ try { 
+    $con = new-object ("Microsoft.SqlServer.Management.Common.ServerConnection") $ServerInstance  
+      
+    $con.Connect()  
+  
+    $server = new-object ("Microsoft.SqlServer.Management.Smo.Server") $con  
+    $db = $server.Databases[$Database]  
+    $table = new-object ("Microsoft.SqlServer.Management.Smo.Table") $db, $TableName, $Schema
+  
+    foreach ($column in $DataTable.Columns)  
+    {  
+        $sqlDbType = [Microsoft.SqlServer.Management.Smo.SqlDataType]"$(Get-SqlType $column.DataType.Name)"  
+        if ($sqlDbType -eq 'VarBinary' -or $sqlDbType -eq 'VarChar')  
+        {  
+            if ($MaxLength -gt 0)  
+            {$dataType = new-object ("Microsoft.SqlServer.Management.Smo.DataType") $sqlDbType, $MaxLength} 
+            else 
+            { $sqlDbType  = [Microsoft.SqlServer.Management.Smo.SqlDataType]"$(Get-SqlType $column.DataType.Name)Max" 
+              $dataType = new-object ("Microsoft.SqlServer.Management.Smo.DataType") $sqlDbType 
+            } 
+        }  
+        else  
+        { $dataType = new-object ("Microsoft.SqlServer.Management.Smo.DataType") $sqlDbType }  
+        $col = new-object ("Microsoft.SqlServer.Management.Smo.Column") $table, $column.ColumnName, $dataType  
+		if ($col -eq $DataTable.Columns[23]) {
+			$col.Identity = $true
+		}
+		if ($col -ne $DataTable.Columns[23]) {
+			$col.Nullable = $column.AllowDBNull  
+		}
+        $table.Columns.Add($col)  
+    }  
+  
+    if ($AsScript) { 
+        $table.Script() 
+    } 
+    else { 
+        $table.Create() 
+    } 
+} 
+catch { 
+    $message = $_.Exception.GetBaseException().Message 
+    Write-Error $message 
+} 
+   
+} #Add-SqlTable
+#Check Table Exists
+function Check-Table
+{
+	param ($Instance,$Database,$TableName)
+    $Return = $SQL = $dataTable = $null
+    $sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'$TableName'"
+    $dataTable = Invoke-Sqlcmd -ServerInstance $Instance -Database $Database -Query $sql
+    if ($dataTable) {$return = $true}
+    else {$return = $false}
+    $Return
+}
+#Drop Table
+function Drop-Table
+{
+param ($Server,$Database,$TableName)
+	$srv = new-Object Microsoft.SqlServer.Management.Smo.Server($Server)
+	$db = New-Object Microsoft.SqlServer.Management.Smo.Database
+	$db = $srv.Databases[$Database]
+
+	#drop the Table
+	$tb = $db.Tables | ? {$_.Schema -eq $Schema -and $_.Name -Like $TableName} 
+	IF ($tb)
+		{$tb.Drop()}
+}
+###/End SQL Functions
+
+[void][Reflection.Assembly]::LoadWithPartialName("System.Data.DataSetExtensions")
+[void][Reflection.Assembly]::LoadWithPartialName("System.Data.Linq")
+
+$CyberScope_HVA = gci "H:\Greg and Dylan\CyberScope\0. Staging\CyberScope_HVA.csv" | sort LastWriteTime | select -last 1 -ErrorAction SilentlyContinue
+$CyberScope_HVACSV = import-csv $CyberScope_HVA.FullName
+
+$CyberScope_HVACSVNewName = [System.IO.Path]::GetFileNameWithoutExtension($CyberScope_HVA.FullName) + '-' + $dateonly + $CyberScope_HVA.Extension
+
+$CyberScope_HVAArchive = 'H:\Greg and Dylan\CyberScope\0. Staging\Archive\' + $CyberScope_HVACSVNewName
+
+Move-Item $CyberScope_HVA.FullName $CyberScope_HVAArchive -Force
+
+$CyberScope_HVATable = $CyberScope_HVACSV | Out-DataTable
+
+#$IGFTableExists = Check-Table $ServerName $DBName $RootTableName
+#if ($IGFTableExists)
+#    {
+	    Drop-Table $ServerName $DBName $RootTableName
+#    }
+	
+Add-SqlTable $ServerName $DBName $RootTableName $CyberScope_HVATable 	
+Write-SqlTableData -ServerInstance $ServerName -DatabaseName $DBName -TableName $RootTableName -SchemaName $Schema -InputData $CyberScope_HVATable 
+
+
