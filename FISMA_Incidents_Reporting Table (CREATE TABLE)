@@ -1,0 +1,67 @@
+USE [FCEBCyberScorecard]
+GO
+
+/****** Object:  Table [cyber].[FISMA_Incidents_Reporting]    Script Date: 9/26/2023 9:47:52 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[cyber].[FISMA_Incidents_Reporting]') AND type in (N'U'))
+DROP TABLE [cyber].[FISMA_Incidents_Reporting]
+GO
+
+/****** Object:  Table [cyber].[FISMA_Incidents_Reporting]    Script Date: 9/26/2023 9:47:52 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [cyber].[FISMA_Incidents_Reporting](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[ReportingYear] [int] NOT NULL,
+	[ReportingMonth] [int] NOT NULL,
+	[Organization] [varchar](100) NULL,
+	[Impacted_Agency_Name] [varchar](250) NOT NULL,
+	[Incident_ID] [varchar](100) NOT NULL,
+	[Impacted_Sub_Agency_Name] [varchar](250) NULL,
+	[Impacted_Entity_Affiliation] [varchar](100) NULL,
+	[Tracking_Number] [varchar](500) NULL,
+	[Categorization_Tier_1] [varchar](100) NULL,
+	[Impacted_Email_Address] [varchar](150) NULL,
+	[Last_Name] [varchar](100) NULL,
+	[Reported_Source] [varchar](50) NULL,
+	[NCISS_Reported_Priority_And_Color] [varchar](100) NULL,
+	[Observed_Activity] [varchar](50) NULL,
+	[Observed_Activity_Location] [varchar](100) NULL,
+	[Information_Impact] [varchar](100) NULL,
+	[Functional_Impact] [varchar](100) NULL,
+	[Infrastructure_Sector] [varchar](100) NULL,
+	[Is_TV_Unknown] [varchar](10) NULL,
+	[Is_TV_Attrition] [varchar](10) NULL,
+	[Is_TV_Web] [varchar](10) NULL,
+	[Is_TV_Email] [varchar](10) NULL,
+	[Is_TV_External_Removable_Media] [varchar](10) NULL,
+	[Is_TV_Impersonation_Spoofing] [varchar](10) NULL,
+	[Is_TV_Improper_Usage] [varchar](10) NULL,
+	[Is_TV_Lost_Smartphone] [varchar](10) NULL,
+	[Is_TV_Lost_Or_Stolen_Token] [varchar](10) NULL,
+	[Is_TV_Lost_Laptop] [varchar](10) NULL,
+	[Is_TV_Other] [varchar](10) NULL,
+	[Is_Major Incident_Per_OMB_Guidance] [varchar](10) NULL,
+	[Summary] [varchar](100) NULL,
+	[PII_Description] [varchar](max) NULL,
+	[Status] [varchar](25) NULL,
+	[Occurred_On_Datetime] [datetime] NULL,
+	[Reported_Datetime] [datetime] NULL,
+	[Submitted_Datetime] [datetime] NULL,
+	[LastModifiedDate] [datetime] NULL,
+	[LastModifiedBy] [varchar](50) NULL,
+ CONSTRAINT [PK_FISMA_Incidents_Reporting] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC,
+	[ReportingYear] DESC,
+	[ReportingMonth] ASC,
+	[Impacted_Agency_Name] ASC,
+	[Incident_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+
