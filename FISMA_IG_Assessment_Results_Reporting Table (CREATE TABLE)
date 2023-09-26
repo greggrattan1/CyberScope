@@ -1,0 +1,37 @@
+USE [FCEBCyberScorecard]
+GO
+
+/****** Object:  Table [cyber].[FISMA_IG_Assessment_Results_Reporting]    Script Date: 9/26/2023 9:46:02 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[cyber].[FISMA_IG_Assessment_Results_Reporting]') AND type in (N'U'))
+DROP TABLE [cyber].[FISMA_IG_Assessment_Results_Reporting]
+GO
+
+/****** Object:  Table [cyber].[FISMA_IG_Assessment_Results_Reporting]    Script Date: 9/26/2023 9:46:02 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [cyber].[FISMA_IG_Assessment_Results_Reporting](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[Reporting_Year] [int] NOT NULL,
+	[CyberScope_Agency_ID] [int] NULL,
+	[Agency_Name] [varchar](250) NOT NULL,
+	[Agency_Size] [varchar](50) NULL,
+	[Question_Number] [int] NOT NULL,
+	[Question_Text] [varchar](max) NULL,
+	[Answer] [varchar](max) NULL,
+	[External_Data_Type] [varchar](250) NULL,
+	[Value] [int] NOT NULL,
+	[Last_Modified_Date] [datetime] NULL,
+	[Last_Modified_By] [varchar](50) NULL,
+ CONSTRAINT [PK_FISMA_IG_Assessment_Results_Reporting] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC,
+	[Reporting_Year] DESC,
+	[Agency_Name] ASC,
+	[Question_Number] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
