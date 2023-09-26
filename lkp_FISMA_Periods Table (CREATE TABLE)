@@ -1,0 +1,33 @@
+USE [FCEBCyberScorecard]
+GO
+
+/****** Object:  Table [cyber].[lkp_FISMA_Periods]    Script Date: 9/26/2023 9:44:15 AM ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[cyber].[lkp_FISMA_Periods]') AND type in (N'U'))
+DROP TABLE [cyber].[lkp_FISMA_Periods]
+GO
+
+/****** Object:  Table [cyber].[lkp_FISMA_Periods]    Script Date: 9/26/2023 9:44:15 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [cyber].[lkp_FISMA_Periods](
+	[ID] [int] NOT NULL,
+	[Reporting_Year] [int] NOT NULL,
+	[Reporting_Quarter] [int] NOT NULL,
+	[Reporting_Period] [varchar](10) NULL,
+	[Start_Date] [date] NULL,
+	[End_Date] [date] NULL,
+	[Last_Modified_Date] [datetime] NULL,
+	[Last_Modified_By] [varchar](50) NULL,
+ CONSTRAINT [PK_lkp_FISMA_Periods] PRIMARY KEY CLUSTERED 
+(
+	[ID] DESC,
+	[Reporting_Year] DESC,
+	[Reporting_Quarter] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
