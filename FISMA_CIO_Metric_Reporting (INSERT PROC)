@@ -1,0 +1,180 @@
+USE [FCEBCyberScorecard]
+GO
+DROP PROCEDURE IF EXISTS [dbo].[insFISMA_CIO_Metric_Reporting]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[insFISMA_CIO_Metric_Reporting]
+(
+ @ReportingYear VARCHAR(4)
+,@ReportingQuarter VARCHAR(2)
+,@LastModifiedBy VARCHAR(100)
+)
+AS
+/*----------------------------------------------------------------------------------------------------
+--Sample Calls
+
+--EXEC [FCEBCyberScorecard].[dbo].[insFISMA_CIO_Metric_Reporting] '2023', '01', 'Gregory L. Grattan' --(FY23_Q1 Example Call) 
+
+--EXEC [FCEBCyberScorecard].[dbo].[insFISMA_CIO_Metric_Reporting] '2023', '02', 'Gregory L. Grattan' --(FY23_Q2 Example Call)
+
+--EXEC [FCEBCyberScorecard].[dbo].[insFISMA_CIO_Metric_Reporting] '2023', '03', 'Gregory L. Grattan' --(FY23_Q3 Example Call)
+
+------------------------------------------------------------------
+
+Description: Populates the [FCEBCyberScorecard].[Cyber].[FISMA_CIO_Metric_Reporting] Table 
+
+Creation Date = 07/06/2023 By Gregory L. Grattan
+
+Changes:
+07/18/2023 - G.Grattan - Added @MaxLastModifiedDate Param to Only Insert Most Recent [FCEBCyberScorecard].[Cyber].[FISMA_CIO_Metric_Staging] Data
+07/18/2023 - G.Grattan - Added @ReportingYear, @ReportingQuarter, & @LastModifiedBy Params
+07/25/2023 - G.Grattan - Updated the Metrics of MFA_Score, Encryption_Data_At_Rest_Score, Encryption_Data_In_Transit_Score, & Testing_Score 
+07/27/2023 - G.Grattan - Re-Did the Entire Proc to use the Newly Created [FCEBCyberScorecard].[cyber].[lkp_FISMA_CIO_Metrics] Table & Utilize a Cursor
+----------------------------------------------------------------------------------------------------*/
+BEGIN 
+------------------------------------------------------------------------
+--NEED DEBUG MESSAGES 
+------------------------------------------------------------------------
+--DECLARE PARAMS 
+DECLARE @spValidFromDate DATE
+DECLARE @spValidToDate DATE
+DECLARE @spLastModifiedBy VARCHAR(100)
+DECLARE @spReportingYear VARCHAR(4)  
+DECLARE @spReportingQuarter VARCHAR(2) 
+
+--SET PARAMS
+SET @spLastModifiedBy = @LastModifiedBy 
+SET @spReportingYear = @ReportingYear
+SET @spReportingQuarter = @ReportingQuarter
+
+SELECT 
+@spValidFromDate = P.Start_Date
+FROM [FCEBCyberScorecard].[cyber].[lkp_FISMA_Periods] P WITH(NOLOCK)
+WHERE P.Reporting_Year = @spReportingYear
+  AND P.Reporting_Quarter = @spReportingQuarter
+
+SELECT 
+@spValidToDate = P.End_Date
+FROM [FCEBCyberScorecard].[cyber].[lkp_FISMA_Periods] P WITH(NOLOCK)
+WHERE P.Reporting_Year = @spReportingYear
+  AND P.Reporting_Quarter = @spReportingQuarter
+------------------------------------------------------------------------
+--DELETE STATEMENT
+DELETE F
+FROM [FCEBCyberScorecard].[Cyber].[FISMA_CIO_Metric_Reporting] F WITH(NOLOCK)
+WHERE f.Reporting_Year = @spReportingYear
+  AND f.Reporting_Quarter = @spReportingQuarter
+------------------------------------------------------------------------
+--POPULATE MAX LAST MODIFIED DATE SO THAT INSERT BELOW ONLY GRABS MOST RECENT STAGING TABLE LOAD
+DECLARE @MaxLastModifiedDate DATETIME
+
+SELECT @MaxLastModifiedDate = MAX(ao.Last_Modified_Date)
+FROM [FCEBCyberScorecard].[cyber].[FISMA_CIO_Metric_Staging] ao WITH(NOLOCK)
+------------------------------------------------------------------------
+--CREATE TEMP TABLE TO PUT CIO METRIC RESULTS IN
+CREATE TABLE #tmpFinal
+(
+	[Reporting_Year] [int],
+	[Reporting_Quarter] [int],
+	[CyberScope_Agency_ID] [int],
+	[Agency_Name] [varchar](250),
+	[Metric_Category_ID] [int],
+	[Metric_Category] [varchar](50),
+	[Metric_Name] [varchar](250),
+	[Metric_Value] [decimal](18, 6),
+)
+---------------------------------------------
+--PERFORM CURSOR TO CREATE CIO METRIC REPORTING DATA SET
+DECLARE @query NVARCHAR(MAX) = '';
+DECLARE @spFormula VARCHAR(MAX), @spID VARCHAR(5)
+
+DECLARE MynewCursor CURSOR 
+
+FOR 
+
+SELECT
+ f.Metric_Formula
+,f.ID
+FROM [FCEBCyberScorecard].[cyber].[lkp_FISMA_CIO_Metrics] f WITH(NOLOCK)
+WHERE CONVERT(VARCHAR(10),f.Valid_From_Date) <= CONVERT(VARCHAR(10),@spValidFromDate)
+  AND ISNULL(CONVERT(VARCHAR(10),f.Valid_To_Date), CONVERT(VARCHAR(10),@spValidToDate)) >= CONVERT(VARCHAR(10),@spValidToDate)
+
+OPEN MynewCursor
+
+FETCH NEXT FROM MynewCursor 
+INTO @spFormula, @spID
+
+WHILE @@FETCH_STATUS = 0
+
+BEGIN
+
+SELECT @query = 
+'INSERT INTO #tmpFinal 
+SELECT
+ Reporting_Year = s.Reporting_Year
+,Reporting_Quarter = s.Reporting_Quarter
+,CyberScope_Agency_ID = a.CyberScopePK_Agency
+,Agency_Name = a.Agency
+,Metric_Category_ID = c.Metric_Category_ID
+,Metric_Category = c.Metric_Category
+,Metric_Name = c.Metric_Name'
++ @spFormula + 
+
+' FROM [FCEBCyberScorecard].[db_owner].[tblCyberScopeAgencies] a WITH(NOLOCK) 
+
+INNER JOIN [FCEBCyberScorecard].[cyber].[FISMA_CIO_Metric_Staging] s WITH(NOLOCK)
+ ON a.CyberScopePK_Agency = s.CyberScope_Agency_ID
+
+INNER JOIN [FCEBCyberScorecard].[cyber].[lkp_FISMA_CIO_Metrics] c WITH(NOLOCK)
+ ON C.ID = '+ @spID
+
++ ' WHERE s.Reporting_Year =' + @spReportingYear
++   ' AND s.Reporting_Quarter = ' + @spReportingQuarter + ' '
+
++ 
+'GROUP BY  
+ s.Reporting_Year
+,s.Reporting_Quarter
+,a.CyberScopePK_Agency
+,a.Agency
+,c.Metric_Category_ID
+,c.Metric_Category
+,c.Metric_Name
+,c.Metric_Ceiling
+,c.Metric_Target'
+
+EXEC (@query)
+
+FETCH NEXT FROM MynewCursor 
+INTO @spFormula, @spID
+
+PRINT @spID
+
+END
+
+CLOSE MynewCursor
+
+DEALLOCATE MynewCursor
+---------------------------------------------------
+--INSERT INTO REPORTING TABLE
+INSERT INTO [FCEBCyberScorecard].[Cyber].[FISMA_CIO_Metric_Reporting]
+SELECT 
+ f.Reporting_Year
+,f.Reporting_Quarter
+,f.CyberScope_Agency_ID
+,f.Agency_Name
+,f.Metric_Category_ID
+,f.Metric_Category
+,f.Metric_Name
+,f.Metric_Value
+,Last_Modified_Date = GETDATE()
+,Last_Modified_By = @spLastModifiedBy
+FROM #tmpFinal f WITH(NOLOCK)
+---------------------------------------------------
+--DROP TEMP TABLES 
+DROP TABLE #tmpFinal
+---------------------------------------------------
+END
